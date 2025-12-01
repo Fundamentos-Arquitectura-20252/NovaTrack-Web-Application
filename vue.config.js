@@ -6,7 +6,7 @@ module.exports = {
   filenameHashing: true,
 
   devServer: {
-    port: 8080,
+    port: process.env.NODE_ENV || 3000,
     open: true,
     client: {
       overlay: {
