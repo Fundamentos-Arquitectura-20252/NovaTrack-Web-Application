@@ -1,5 +1,5 @@
 <template>
-  <form @submit.prevent="handleSubmit" id="driverForm">
+  <form id="driverForm">
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
       <div class="form-group">
         <label for="firstName" class="form-label">Nombre *</label>
@@ -52,11 +52,6 @@
       <label for="address" class="form-label">Dirección</label>
       <textarea id="address" class="form-control" rows="2" v-model="driver.address"></textarea>
     </div>
-    
-    <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem;">
-      <button type="button" class="btn btn-secondary" @click="$emit('cancel')">Cancelar</button>
-      <button type="submit" class="btn btn-primary">{{ isEdit ? 'Actualizar' : 'Guardar' }} conductor</button>
-    </div>
   </form>
 </template>
 
@@ -90,8 +85,8 @@ export default {
     }
   },
   methods: {
-    handleSubmit() {
-      this.$emit('submit', { ...this.driver })
+    getFormData() {
+      return { ...this.driver }
     }
   },
   watch: {

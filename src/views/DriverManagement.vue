@@ -135,12 +135,13 @@
     <!-- Modal para nuevo/editar conductor -->
     <Modal
         :show="showDriverModal"
-        :title="editingDriver.id ? 'Editar Conductor' : 'Registrar nuevo conductor'"
+        :title="editingDriver?.id ? 'Editar Conductor' : 'Registrar nuevo conductor'"
         @close="showDriverModal = false"
+        @submit="submitDriverFromModal"
     >
       <DriverForm
+          ref="driverForm"
           :driver-data="editingDriver"
-          @submit="saveDriver"
           @cancel="showDriverModal = false"
       />
     </Modal>
@@ -265,6 +266,10 @@ export default {
     }
   },
   methods: {
+    submitDriverFromModal() {
+      const formData = this.$refs.driverForm.getFormData()
+      this.saveDriver(formData)
+    },
     getStatusText(status) {
       const statusMap = {
         active: 'Activo',
@@ -297,7 +302,7 @@ export default {
       this.showStatsModal = true
     },
     saveDriver(driver) {
-      if (driver.id) {
+      if (driver && driver.id) {
         // Update existing driver
         const index = this.drivers.findIndex(d => d.id === driver.id)
         if (index !== -1) {
@@ -305,13 +310,12 @@ export default {
         }
       } else {
         // Add new driver
-        const newId = Math.max(...this.drivers.map(d => d.id)) + 1
-        const newCode = `DR-${String(newId).padStart(3, '0')}`
-        this.drivers.push({
-          ...driver,
-          id: newId,
-          code: newCode
-        })
+            this.$store.dispatch('drivers/createDriver', driver)
+              .then(() => {
+                  this.showDriverModal = false
+                  this.editingDriver = {}
+                })
+
       }
 
       this.showDriverModal = false

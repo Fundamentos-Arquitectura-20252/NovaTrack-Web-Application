@@ -10,7 +10,7 @@ import {
 } from './mockAdapter'
 
 // Determinar si usamos los adaptadores mock (durante desarrollo)
-const useMock = process.env.NODE_ENV === 'development'
+const useMock = false
 
 // Crear instancia de Axios con configuración base
 const api = axios.create({
@@ -44,6 +44,7 @@ api.interceptors.response.use(
   }
 )
 
+
 // Definir servicios para cada entidad, usando adaptadores mock si está en modo desarrollo
 const vehicleService = {
   getAll: () => useMock ? vehicleAdapter.getAll() : api.get('/vehicles'),
@@ -54,11 +55,11 @@ const vehicleService = {
 }
 
 const driverService = {
-  getAll: () => useMock ? driverAdapter.getAll() : api.get('/drivers'),
-  getById: id => useMock ? driverAdapter.getById(id) : api.get(`/drivers/${id}`),
-  create: data => useMock ? driverAdapter.create(data) : api.post('/drivers', data),
-  update: (id, data) => useMock ? driverAdapter.update(id, data) : api.put(`/drivers/${id}`, data),
-  delete: id => useMock ? driverAdapter.delete(id) : api.delete(`/drivers/${id}`)
+  getAll: () => useMock ? driverAdapter.getAll() : api.get('/personnel/drivers'),
+  getById: id => useMock ? driverAdapter.getById(id) : api.get(`/personnel/drivers/${id}`),
+  create: data => useMock ? driverAdapter.create(data) : api.post('/personnel/drivers', data),
+  update: (id, data) => useMock ? driverAdapter.update(id, data) : api.put(`/personnel/drivers/${id}`, data),
+  delete: id => useMock ? driverAdapter.delete(id) : api.delete(`/personnel/drivers/${id}`)
 }
 
 const fleetService = {
