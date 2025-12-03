@@ -65,7 +65,7 @@
           <td>{{ fleet.description }}</td>
           <td>{{ fleet.vehicleCount }}</td>
           <td>
-            <StatusBadge :status="fleet.status" :text="getStatusText(fleet.status)" />
+            <StatusBadge :status="fleet.isActive ? 'active' : 'inactive'" :text="getStatusText(fleet.isActive)" />
           </td>
           <td>
             <div style="width: 100%; height: 8px; background-color: #f0f0f0; border-radius: 4px;">
@@ -86,6 +86,9 @@
             <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.813rem;" @click="showFleetStats(fleet)">
               <i class="fas fa-chart-line"></i>
             </button>
+            <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.813rem; color: var(--color-error);" @click="deleteFleet(fleet)">
+              <i class="fas fa-trash"></i>
+            </button>
           </td>
         </tr>
         </tbody>
@@ -100,7 +103,7 @@
           <button class="btn btn-secondary">
             <i class="fas fa-chart-bar" style="margin-right: 0.5rem;"></i> Reportes
           </button>
-          <button class="btn btn-primary" style="margin-left: 0.5rem;" @click="showAssignVehiclesModal = true">
+          <button class="btn btn-primary" style="margin-left: 0.5rem;" @click="openAssignModal">
             <i class="fas fa-user-plus" style="margin-right: 0.5rem;"></i> Asignar vehículos
           </button>
         </div>
@@ -168,7 +171,7 @@
           </tr>
           </thead>
           <tbody>
-          <tr v-for="vehicle in fleetVehicles" :key="vehicle.id">
+          <tr v-for="vehicle in paginatedFleetVehicles" :key="vehicle.id">
             <td>{{ vehicle.plate }}</td>
             <td>{{ vehicle.model }} {{ vehicle.year }}</td>
             <td>{{ vehicle.assignedDriver || 'No asignado' }}</td>
@@ -309,6 +312,11 @@
     >
       <form @submit.prevent="saveFleet">
         <div class="form-group">
+          <label for="fleetCode" class="form-label">Código *</label>
+          <input type="text" id="fleetCode" class="form-control" v-model="editingFleet.code" required placeholder="Ej. FL-001">
+        </div>
+
+        <div class="form-group">
           <label for="fleetName" class="form-label">Nombre *</label>
           <input type="text" id="fleetName" class="form-control" v-model="editingFleet.name" required>
         </div>
@@ -319,10 +327,21 @@
         </div>
 
         <div class="form-group">
+          <label for="fleetType" class="form-label">Tipo</label>
+          <select id="fleetType" class="form-control" v-model="editingFleet.type">
+            <option value="" disabled>Seleccione un tipo</option>
+            <option value="Primary">Primary</option>
+            <option value="Secondary">Secondary</option>
+            <option value="External">External</option>
+            <option value="Rental">Rental</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label for="fleetStatus" class="form-label">Estado</label>
-          <select id="fleetStatus" class="form-control" v-model="editingFleet.status">
-            <option value="active">Activa</option>
-            <option value="inactive">Inactiva</option>
+          <select id="fleetStatus" class="form-control" v-model="editingFleet.isActive">
+            <option :value="true">Activa</option>
+            <option :value="false">Inactiva</option>
           </select>
         </div>
       </form>
@@ -336,8 +355,7 @@
 
 <script>
 import { Header, StatusBadge, Modal, Pagination } from '@/components/common'
-import fleetsData from '@/data/fleets.json'
-import vehiclesData from '@/data/vehicles.json'
+import { fleetService, vehicleService } from '@/services/api'
 
 export default {
   name: 'FleetManagement',
@@ -349,8 +367,9 @@ export default {
   },
   data() {
     return {
-      fleets: [...fleetsData],
-      vehicles: [...vehiclesData],
+      fleets: [],
+      vehicles: [], // All vehicles for assignment
+      currentFleetVehicles: [], // Vehicles of the selected fleet
       selectedFleet: null,
       activeFleetTab: 0,
       fleetTabs: ['Vehículos', 'Conductores', 'Rutas', 'Mantenimiento', 'Estadísticas'],
@@ -363,22 +382,22 @@ export default {
       selectAllVehicles: false,
       showNewFleetModal: false,
       editingFleet: {
+        code: '',
         name: '',
         description: '',
-        status: 'active'
-      }
+        type: '',
+        isActive: true
+      },
+      loading: false,
+      error: null
     }
   },
   computed: {
     totalVehicles() {
-      return this.fleets.reduce((total, fleet) => total + fleet.vehicleCount, 0)
+      return this.fleets.reduce((total, fleet) => total + (fleet.vehicleCount || 0), 0)
     },
     fleetVehicles() {
-      // En un escenario real, esto se obtendría de la API basado en la flota seleccionada
-      if (!this.selectedFleet) return []
-
-      // Filtramos vehículos para la flota seleccionada
-      return this.vehicles.filter(v => v.fleet === this.selectedFleet.name)
+      return this.currentFleetVehicles
     },
     filteredFleetVehicles() {
       if (!this.fleetVehicleSearch) {
@@ -398,7 +417,9 @@ export default {
       return this.filteredFleetVehicles.slice(start, end)
     },
     availableVehicles() {
-      // Vehículos disponibles para asignar (los que no están en la flota seleccionada)
+      // Vehicles available to assign (those not in the selected fleet)
+      // Note: In a real API, we might want a specific endpoint for "unassigned vehicles"
+      // For now, we filter client-side assuming we fetched all vehicles or available ones
       return this.vehicles.filter(v => {
         if (this.assignVehicleSearch) {
           const query = this.assignVehicleSearch.toLowerCase()
@@ -406,20 +427,58 @@ export default {
             return false
           }
         }
-
-        // Incluir vehículos sin flota o con otra flota
-        return !v.fleet || v.fleet !== this.selectedFleet.name
+        // Exclude vehicles already in this fleet
+        // Assuming vehicle objects have a fleetId or we check against currentFleetVehicles
+        const isInCurrentFleet = this.currentFleetVehicles.some(fv => fv.id === v.id)
+        return !isInCurrentFleet
       })
     }
   },
   methods: {
-    getStatusText(status) {
+    async loadFleets() {
+      this.loading = true
+      this.error = null
+      try {
+        const response = await fleetService.getAll()
+        this.fleets = response.data
+        if (this.fleets.length > 0 && !this.selectedFleet) {
+          this.viewFleet(this.fleets[0])
+        }
+      } catch (err) {
+        console.error('Error loading fleets:', err)
+        this.error = 'Error al cargar las flotas.'
+      } finally {
+        this.loading = false
+      }
+    },
+    async loadAllVehicles() {
+      try {
+        const response = await vehicleService.getAll()
+        this.vehicles = response.data
+      } catch (err) {
+        console.error('Error loading all vehicles:', err)
+      }
+    },
+    async loadFleetVehicles(fleetId) {
+      try {
+        const response = await fleetService.getVehicles(fleetId)
+        this.currentFleetVehicles = response.data
+      } catch (err) {
+        console.error('Error loading fleet vehicles:', err)
+        this.currentFleetVehicles = []
+      }
+    },
+    getStatusText(isActive) {
+      if (typeof isActive === 'boolean') {
+        return isActive ? 'Activa' : 'Inactiva'
+      }
+      // Fallback for string status if needed (e.g. vehicles)
       const statusMap = {
         active: 'Activa',
         inactive: 'Inactiva',
         warning: 'En ruta'
       }
-      return statusMap[status] || status
+      return statusMap[isActive] || isActive
     },
     getFleetIcon(fleetName) {
       const iconMap = {
@@ -448,14 +507,36 @@ export default {
       this.selectedFleet = fleet
       this.activeFleetTab = 0
       this.fleetVehiclePage = 1
+      this.loadFleetVehicles(fleet.id)
     },
     editFleet(fleet) {
       this.editingFleet = { ...fleet }
       this.showNewFleetModal = true
     },
+    async deleteFleet(fleet) {
+      if (!confirm(`¿Estás seguro de eliminar la flota ${fleet.name}?`)) return
+
+      try {
+        await fleetService.delete(fleet.id)
+        this.fleets = this.fleets.filter(f => f.id !== fleet.id)
+        if (this.selectedFleet && this.selectedFleet.id === fleet.id) {
+          this.selectedFleet = this.fleets.length > 0 ? this.fleets[0] : null
+          if (this.selectedFleet) {
+            this.viewFleet(this.selectedFleet)
+          } else {
+            this.currentFleetVehicles = []
+          }
+        }
+        alert('Flota eliminada correctamente')
+      } catch (err) {
+        console.error('Error deleting fleet:', err)
+        alert('Error al eliminar la flota')
+      }
+    },
     showFleetStats(fleet) {
       this.selectedFleet = fleet
       this.activeFleetTab = 4 // Mostrar pestaña de estadísticas
+      this.loadFleetVehicles(fleet.id)
     },
     toggleAllVehicles() {
       if (this.selectAllVehicles) {
@@ -464,74 +545,87 @@ export default {
         this.selectedVehiclesToAssign = []
       }
     },
-    assignVehicles() {
-      // Simulación de asignación de vehículos a la flota
+    async assignVehicles() {
       if (this.selectedVehiclesToAssign.length === 0) return
 
-      // Actualizar vehículos
-      this.selectedVehiclesToAssign.forEach(vehicleId => {
-        const vehicle = this.vehicles.find(v => v.id === vehicleId)
-        if (vehicle) {
-          vehicle.fleet = this.selectedFleet.name
+      try {
+        await fleetService.assignVehicles(this.selectedFleet.id, this.selectedVehiclesToAssign)
+        
+        // Reload fleet vehicles to update the list
+        await this.loadFleetVehicles(this.selectedFleet.id)
+        
+        // Update vehicle count locally or reload fleets
+        const fleet = this.fleets.find(f => f.id === this.selectedFleet.id)
+        if (fleet) {
+          fleet.vehicleCount = (fleet.vehicleCount || 0) + this.selectedVehiclesToAssign.length
         }
-      })
 
-      // Actualizar contador de vehículos
-      const fleetIndex = this.fleets.findIndex(f => f.id === this.selectedFleet.id)
-      if (fleetIndex !== -1) {
-        this.fleets[fleetIndex].vehicleCount += this.selectedVehiclesToAssign.length
-        this.selectedFleet = { ...this.fleets[fleetIndex] }
+        // Close modal
+        this.showAssignVehiclesModal = false
+        this.selectedVehiclesToAssign = []
+        this.selectAllVehicles = false
+
+        alert(`Vehículos asignados correctamente`)
+      } catch (err) {
+        console.error('Error assigning vehicles:', err)
+        alert('Error al asignar vehículos')
       }
-
-      // Cerrar modal
-      this.showAssignVehiclesModal = false
-      this.selectedVehiclesToAssign = []
-      this.selectAllVehicles = false
-
-      // Mostrar notificación (en una implementación real)
-      alert(`Se han asignado ${this.selectedVehiclesToAssign.length} vehículos a la flota ${this.selectedFleet.name}`)
     },
-    saveFleet() {
-      if (this.editingFleet.id) {
-        // Actualizar flota existente
-        const index = this.fleets.findIndex(f => f.id === this.editingFleet.id)
-        if (index !== -1) {
-          this.fleets.splice(index, 1, { ...this.editingFleet })
-
-          // Si es la flota seleccionada actualmente, actualizar también esa referencia
-          if (this.selectedFleet && this.selectedFleet.id === this.editingFleet.id) {
-            this.selectedFleet = { ...this.editingFleet }
+    async saveFleet() {
+      try {
+        if (this.editingFleet.id) {
+          // Update
+          const payload = {
+            name: this.editingFleet.name,
+            description: this.editingFleet.description,
+            type: this.editingFleet.type,
+            isActive: this.editingFleet.isActive
           }
-        }
-      } else {
-        // Crear nueva flota
-        const newId = Math.max(...this.fleets.map(f => f.id)) + 1
-        const newCode = `FL-${String(newId).padStart(3, '0')}`
-        const newFleet = {
-          ...this.editingFleet,
-          id: newId,
-          code: newCode,
-          vehicleCount: 0,
-          performance: 100
+          const response = await fleetService.update(this.editingFleet.id, payload)
+          const updatedFleet = response.data
+          
+          const index = this.fleets.findIndex(f => f.id === this.editingFleet.id)
+          if (index !== -1) {
+            this.fleets.splice(index, 1, updatedFleet)
+            if (this.selectedFleet && this.selectedFleet.id === this.editingFleet.id) {
+              this.selectedFleet = updatedFleet
+            }
+          }
+        } else {
+          // Create
+          // Construct payload according to schema
+          const payload = {
+            code: this.editingFleet.code,
+            name: this.editingFleet.name,
+            description: this.editingFleet.description,
+            type: this.editingFleet.type
+          }
+          const response = await fleetService.create(payload)
+          const newFleet = response.data
+          this.fleets.push(newFleet)
+          this.viewFleet(newFleet)
         }
 
-        this.fleets.push(newFleet)
-        this.selectedFleet = newFleet
+        this.showNewFleetModal = false
+        this.editingFleet = {
+          code: '',
+          name: '',
+          description: '',
+          type: '',
+          isActive: true
+        }
+      } catch (err) {
+        console.error('Error saving fleet:', err)
+        alert('Error al guardar la flota')
       }
-
-      this.showNewFleetModal = false
-      this.editingFleet = {
-        name: '',
-        description: '',
-        status: 'active'
-      }
+    },
+    openAssignModal() {
+      this.showAssignVehiclesModal = true
+      this.loadAllVehicles() // Load vehicles when opening the modal
     }
   },
   created() {
-    // Seleccionar la primera flota por defecto
-    if (this.fleets.length > 0) {
-      this.selectedFleet = this.fleets[0]
-    }
+    this.loadFleets()
   }
 }
 </script>

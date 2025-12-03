@@ -1,12 +1,12 @@
 import axios from 'axios'
-import { 
-  vehicleAdapter, 
-  driverAdapter, 
-  fleetAdapter, 
-  reportAdapter, 
-  monitoringAdapter, 
-  analyticsAdapter, 
-  authAdapter 
+import {
+  vehicleAdapter,
+  driverAdapter,
+  fleetAdapter,
+  reportAdapter,
+  monitoringAdapter,
+  analyticsAdapter,
+  authAdapter
 } from './mockAdapter'
 
 // Determinar si usamos los adaptadores mock (durante desarrollo)
@@ -14,7 +14,7 @@ const useMock = false
 
 // Crear instancia de Axios con configuración base
 const api = axios.create({
-  baseURL: process.env.VUE_APP_API_URL || '/api',
+  baseURL: process.env.VUE_APP_API_URL || '/fleetmanagement/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
@@ -63,13 +63,98 @@ const driverService = {
 }
 
 const fleetService = {
-  getAll: () => useMock ? fleetAdapter.getAll() : api.get('/fleets'),
-  getById: id => useMock ? fleetAdapter.getById(id) : api.get(`/fleets/${id}`),
-  getVehicles: id => useMock ? fleetAdapter.getVehicles(id) : api.get(`/fleets/${id}/vehicles`),
-  create: data => useMock ? fleetAdapter.create(data) : api.post('/fleets', data),
-  update: (id, data) => useMock ? fleetAdapter.update(id, data) : api.put(`/fleets/${id}`, data),
-  delete: id => useMock ? fleetAdapter.delete(id) : api.delete(`/fleets/${id}`),
-  assignVehicles: (id, vehicleIds) => useMock ? fleetAdapter.assignVehicles(id, { vehicleIds }) : api.post(`/fleets/${id}/vehicles`, { vehicleIds })
+  getAll: async () => {
+    const url = '/fleetmanagement/api/fleets/';
+    console.log(`[FleetService] GET Request: ${url}`);
+    if (useMock) return fleetAdapter.getAll();
+    try {
+      const response = await api.get(url);
+      console.log(`[FleetService] GET Response: ${url}`, response.data);
+      return response;
+    } catch (error) {
+      console.error(`[FleetService] GET Error: ${url}`, error);
+      throw error;
+    }
+  },
+  getById: async (id) => {
+    const url = `/fleetmanagement/api/fleets/${id}`;
+    console.log(`[FleetService] GET Request: ${url}`);
+    if (useMock) return fleetAdapter.getById(id);
+    try {
+      const response = await api.get(url);
+      console.log(`[FleetService] GET Response: ${url}`, response.data);
+      return response;
+    } catch (error) {
+      console.error(`[FleetService] GET Error: ${url}`, error);
+      throw error;
+    }
+  },
+  getVehicles: async (id) => {
+    const url = '/fleetmanagement/api/vehicles';
+    console.log(`[FleetService] GET Request: ${url}?fleetId=${id}`);
+    if (useMock) return fleetAdapter.getVehicles(id);
+    try {
+      const response = await api.get(url, { params: { fleetId: id } });
+      console.log(`[FleetService] GET Response: ${url}`, response.data);
+      return response;
+    } catch (error) {
+      console.error(`[FleetService] GET Error: ${url}`, error);
+      throw error;
+    }
+  },
+  create: async (data) => {
+    const url = '/fleetmanagement/api/fleets/';
+    console.log(`[FleetService] POST Request: ${url}`, data);
+    if (useMock) return fleetAdapter.create(data);
+    try {
+      const response = await api.post(url, data);
+      console.log(`[FleetService] POST Response: ${url}`, response.data);
+      return response;
+    } catch (error) {
+      console.error(`[FleetService] POST Error: ${url}`, error);
+      throw error;
+    }
+  },
+  update: async (id, data) => {
+    const url = `/fleetmanagement/api/fleets/${id}`;
+    console.log(`[FleetService] PUT Request: ${url}`, data);
+    if (useMock) return fleetAdapter.update(id, data);
+    try {
+      const response = await api.put(url, data);
+      console.log(`[FleetService] PUT Response: ${url}`, response.data);
+      return response;
+    } catch (error) {
+      console.error(`[FleetService] PUT Error: ${url}`, error);
+      throw error;
+    }
+  },
+  delete: async (id) => {
+    const url = `/fleetmanagement/api/fleets/${id}`;
+    console.log(`[FleetService] DELETE Request: ${url}`);
+    if (useMock) return fleetAdapter.delete(id);
+    try {
+      const response = await api.delete(url);
+      console.log(`[FleetService] DELETE Response: ${url}`, response.data);
+      return response;
+    } catch (error) {
+      console.error(`[FleetService] DELETE Error: ${url}`, error);
+      throw error;
+    }
+  },
+  assignVehicles: async (id, vehicleIds) => {
+    const url = `/fleetmanagement/api/fleets/${id}/vehicles`;
+    const payload = { vehicleIds };
+    console.log(`[FleetService] POST Request: ${url}`, payload);
+    if (useMock) return fleetAdapter.assignVehicles(id, payload);
+    try {
+      const response = await api.post(url, payload);
+      console.log(`[FleetService] POST Response: ${url}`, response.data);
+      return response;
+    } catch (error) {
+      console.error(`[FleetService] POST Error: ${url}`, error);
+      throw error;
+    }
+  }
 }
 
 const reportService = {

@@ -1,7 +1,8 @@
 <template>
   <nav class="sidebar">
     <div class="logo-container">
-      <img src="@/assets/img/logo.png" alt="Flota365 Logo" class="logo-image">
+<!--       <img src="@/assets/img/logo.png" alt="NovaTrack Logo" class="logo-image"> -->
+       <p class="logo-text text-center">NovaTrack</p>
     </div>
     
     <ul class="menu">
@@ -11,6 +12,8 @@
           <span class="menu-text">{{ item.label }}</span>
         </router-link>
       </li>
+
+
       <li class="menu-item" style="margin-top: 3rem;">
         <a href="#" class="menu-link" @click.prevent="logout">
           <i class="fas fa-sign-out-alt menu-icon"></i>
