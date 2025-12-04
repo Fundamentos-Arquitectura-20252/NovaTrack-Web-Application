@@ -235,7 +235,10 @@ export default {
       this.loading = true
       this.error = null
       try {
-        const response = await vehicleService.getAll()
+        const params = {}
+        if (this.filters.status) params.status = this.filters.status
+        
+        const response = await vehicleService.getAll(params)
         this.vehicles = response.data
       } catch (err) {
         console.error('Error loading vehicles:', err)
@@ -287,6 +290,7 @@ export default {
         
         this.showVehicleModal = false
         this.editingVehicle = {}
+        alert('Vehículo guardado correctamente')
       } catch (err) {
         console.error('Error saving vehicle:', err)
         alert('Error al guardar el vehículo')

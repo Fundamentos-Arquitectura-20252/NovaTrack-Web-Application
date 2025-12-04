@@ -47,11 +47,31 @@ api.interceptors.response.use(
 
 // Definir servicios para cada entidad, usando adaptadores mock si está en modo desarrollo
 const vehicleService = {
-  getAll: () => useMock ? vehicleAdapter.getAll() : api.get('/vehicles'),
-  getById: id => useMock ? vehicleAdapter.getById(id) : api.get(`/vehicles/${id}`),
-  create: data => useMock ? vehicleAdapter.create(data) : api.post('/vehicles', data),
-  update: (id, data) => useMock ? vehicleAdapter.update(id, data) : api.put(`/vehicles/${id}`, data),
-  delete: id => useMock ? vehicleAdapter.delete(id) : api.delete(`/vehicles/${id}`)
+  getAll: (params) => {
+    const url = '/fleetmanagement/api/vehicles';
+    console.log(`[VehicleService] GET Request: ${url}`, params);
+    return useMock ? vehicleAdapter.getAll() : api.get(url, { params });
+  },
+  getById: id => {
+    const url = `/fleetmanagement/api/vehicles/${id}`;
+    console.log(`[VehicleService] GET Request: ${url}`);
+    return useMock ? vehicleAdapter.getById(id) : api.get(url);
+  },
+  create: data => {
+    const url = '/fleetmanagement/api/vehicles';
+    console.log(`[VehicleService] POST Request: ${url}`, data);
+    return useMock ? vehicleAdapter.create(data) : api.post(url, data);
+  },
+  update: (id, data) => {
+    const url = `/fleetmanagement/api/vehicles/${id}`;
+    console.log(`[VehicleService] PUT Request: ${url}`, data);
+    return useMock ? vehicleAdapter.update(id, data) : api.put(url, data);
+  },
+  delete: id => {
+    const url = `/fleetmanagement/api/vehicles/${id}`;
+    console.log(`[VehicleService] DELETE Request: ${url}`);
+    return useMock ? vehicleAdapter.delete(id) : api.delete(url);
+  }
 }
 
 const driverService = {

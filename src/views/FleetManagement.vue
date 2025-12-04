@@ -172,7 +172,7 @@
           </thead>
           <tbody>
           <tr v-for="vehicle in paginatedFleetVehicles" :key="vehicle.id">
-            <td>{{ vehicle.plate }}</td>
+            <td>{{ vehicle.licensePlate || vehicle.plate }}</td>
             <td>{{ vehicle.model }} {{ vehicle.year }}</td>
             <td>{{ vehicle.assignedDriver || 'No asignado' }}</td>
             <td>
@@ -274,7 +274,7 @@
                     v-model="selectedVehiclesToAssign"
                 >
               </td>
-              <td style="padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee;">{{ vehicle.plate }}</td>
+              <td style="padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee;">{{ vehicle.licensePlate || vehicle.plate }}</td>
               <td style="padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee;">{{ vehicle.model }}</td>
               <td style="padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee;">{{ vehicle.year }}</td>
               <td style="padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee;">
@@ -406,7 +406,7 @@ export default {
 
       const query = this.fleetVehicleSearch.toLowerCase()
       return this.fleetVehicles.filter(v =>
-          v.plate.toLowerCase().includes(query) ||
+          (v.licensePlate || v.plate || '').toLowerCase().includes(query) ||
           v.model.toLowerCase().includes(query) ||
           (v.assignedDriver && v.assignedDriver.toLowerCase().includes(query))
       )
@@ -417,23 +417,35 @@ export default {
       return this.filteredFleetVehicles.slice(start, end)
     },
     availableVehicles() {
-      // Vehicles available to assign (those not in the selected fleet)
-      // Note: In a real API, we might want a specific endpoint for "unassigned vehicles"
-      // For now, we filter client-side assuming we fetched all vehicles or available ones
-      return this.vehicles.filter(v => {
-        if (this.assignVehicleSearch) {
-          const query = this.assignVehicleSearch.toLowerCase()
-          if (!v.plate.toLowerCase().includes(query) && !v.model.toLowerCase().includes(query)) {
-            return false
-          }
+if (!this.vehicles || !Array.isArray(this.vehicles)) return [];
+
+    return this.vehicles.filter(v => {
+      // 1. Filtro de búsqueda por texto
+      if (this.assignVehicleSearch) {
+        const query = this.assignVehicleSearch.toLowerCase();
+        const matchesPlate = (v.licensePlate || v.plate || '').toLowerCase().includes(query);
+        const matchesModel = v.model && v.model.toLowerCase().includes(query);
+        
+        if (!matchesPlate && !matchesModel) {
+          return false;
         }
-        // Exclude vehicles already in this fleet
-        // Assuming vehicle objects have a fleetId or we check against currentFleetVehicles
-        const isInCurrentFleet = this.currentFleetVehicles.some(fv => fv.id === v.id)
-        return !isInCurrentFleet
-      })
+      }
+
+      // 2. Filtro: Excluir los que YA están en esta flota
+      // Convertimos a String para asegurar comparación "1" == 1
+      const isInCurrentFleet = this.currentFleetVehicles.some(
+        fv => String(fv.id) === String(v.id)
+      );
+      
+      // Opcional: Si tu lógica de negocio dice que un vehículo solo puede estar
+      // en UNA flota a la vez, deberías filtrar también los que tengan v.fleetId != null
+      // return !isInCurrentFleet && !v.fleetId; 
+      
+      return !isInCurrentFleet;
+    });
     }
   },
+  
   methods: {
     async loadFleets() {
       this.loading = true
@@ -548,28 +560,41 @@ export default {
     async assignVehicles() {
       if (this.selectedVehiclesToAssign.length === 0) return
 
-      try {
-        await fleetService.assignVehicles(this.selectedFleet.id, this.selectedVehiclesToAssign)
-        
-        // Reload fleet vehicles to update the list
-        await this.loadFleetVehicles(this.selectedFleet.id)
-        
-        // Update vehicle count locally or reload fleets
-        const fleet = this.fleets.find(f => f.id === this.selectedFleet.id)
-        if (fleet) {
-          fleet.vehicleCount = (fleet.vehicleCount || 0) + this.selectedVehiclesToAssign.length
-        }
+try {
+    // 1. Llamada al servicio
+    await fleetService.assignVehicles(this.selectedFleet.id, this.selectedVehiclesToAssign);
 
-        // Close modal
-        this.showAssignVehiclesModal = false
-        this.selectedVehiclesToAssign = []
-        this.selectAllVehicles = false
+    // 2. Mensaje de éxito
+    alert(`Se han asignado ${this.selectedVehiclesToAssign.length} vehículos correctamente.`);
 
-        alert(`Vehículos asignados correctamente`)
-      } catch (err) {
-        console.error('Error assigning vehicles:', err)
-        alert('Error al asignar vehículos')
-      }
+    // 3. Recargar los datos de la flota actual para ver los nuevos vehículos en la tabla
+    await this.loadFleetVehicles(this.selectedFleet.id);
+
+    // 4. Actualizar el contador de vehículos en la tarjeta de la flota (Visual)
+    // Buscamos la flota en el array principal y actualizamos su contador
+    const fleetIndex = this.fleets.findIndex(f => f.id === this.selectedFleet.id);
+    if (fleetIndex !== -1) {
+      // Opción A: Si el backend devuelve la flota actualizada, úsala.
+      // Opción B (Manual): Sumar la cantidad localmente
+      this.fleets[fleetIndex].vehicleCount = (this.fleets[fleetIndex].vehicleCount || 0) + this.selectedVehiclesToAssign.length;
+      
+      // Actualizar también el objeto seleccionado para reflejar cambios en el header del card
+      this.selectedFleet = { ...this.fleets[fleetIndex] }; 
+    }
+
+    // 5. Cerrar y limpiar
+    this.showAssignVehiclesModal = false;
+    this.selectedVehiclesToAssign = [];
+    this.selectAllVehicles = false;
+
+  } catch (err) {
+    console.error('Error assigning vehicles:', err);
+    // Mostrar error más detallado si viene del backend
+    const msg = err.response?.data?.message || 'Error al asignar vehículos. Verifique que no estén asignados a otra flota.';
+    alert(msg);
+  } finally {
+    this.loading = false;
+  }
     },
     async saveFleet() {
       try {
@@ -619,9 +644,27 @@ export default {
         alert('Error al guardar la flota')
       }
     },
-    openAssignModal() {
-      this.showAssignVehiclesModal = true
-      this.loadAllVehicles() // Load vehicles when opening the modal
+    async openAssignModal() {
+this.loading = true;
+  try {
+    // 1. Cargamos TODOS los vehículos del sistema para poder elegir
+    await this.loadAllVehicles();
+    
+    // 2. Aseguramos que tenemos los vehículos ACTUALES de la flota para filtrar
+    // (Por si el usuario no ha refrescado la vista de detalle recientemente)
+    if (this.selectedFleet) {
+      await this.loadFleetVehicles(this.selectedFleet.id);
+    }
+    
+    this.selectedVehiclesToAssign = [];
+    this.selectAllVehicles = false;
+    this.showAssignVehiclesModal = true;
+  } catch (err) {
+    console.error("Error al abrir modal:", err);
+    alert("No se pudieron cargar los vehículos disponibles.");
+  } finally {
+    this.loading = false;
+  }
     }
   },
   created() {

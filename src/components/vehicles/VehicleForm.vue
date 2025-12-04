@@ -2,8 +2,13 @@
   <form @submit.prevent="handleSubmit" id="vehicleForm">
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
       <div class="form-group">
-        <label for="plateNumber" class="form-label">Número de placa *</label>
-        <input type="text" id="plateNumber" class="form-control" v-model="vehicle.plate" required>
+        <label for="licensePlate" class="form-label">Número de placa *</label>
+        <input type="text" id="licensePlate" class="form-control" v-model="vehicle.licensePlate" required>
+      </div>
+
+      <div class="form-group">
+        <label for="brand" class="form-label">Marca *</label>
+        <input type="text" id="brand" class="form-control" v-model="vehicle.brand" required>
       </div>
       
       <div class="form-group">
@@ -31,14 +36,13 @@
       </div>
       
       <div class="form-group">
-        <label for="driver" class="form-label">Conductor asignado</label>
-        <select id="driver" class="form-control" v-model="vehicle.assignedDriver">
-          <option value="">No asignado</option>
-          <option value="Carlos Méndez">Carlos Méndez</option>
-          <option value="Ana Martínez">Ana Martínez</option>
-          <option value="Roberto Torres">Roberto Torres</option>
-          <option value="Pedro Ramírez">Pedro Ramírez</option>
-        </select>
+        <label for="fleetId" class="form-label">ID Flota</label>
+        <input type="number" id="fleetId" class="form-control" v-model.number="vehicle.fleetId">
+      </div>
+
+      <div class="form-group">
+        <label for="driverId" class="form-label">ID Conductor</label>
+        <input type="number" id="driverId" class="form-control" v-model.number="vehicle.driverId">
       </div>
     </div>
     
@@ -61,12 +65,14 @@ export default {
     vehicleData: {
       type: Object,
       default: () => ({
-        plate: '',
+        licensePlate: '',
+        brand: '',
         model: '',
         year: new Date().getFullYear(),
         mileage: 0,
         status: 'active',
-        assignedDriver: '',
+        fleetId: 0,
+        driverId: 0,
         notes: ''
       })
     }
