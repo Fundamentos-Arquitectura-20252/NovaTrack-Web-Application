@@ -159,7 +159,7 @@
 <script>
 import { Header, StatusBadge, Modal, Pagination } from '@/components/common'
 import VehicleForm from '@/components/vehicles/VehicleForm.vue'
-import { vehicleService } from '@/services/api'
+import { vehicleService, fleetService, driverService } from '@/services/api'
 
 export default {
   name: 'VehicleManagement',
@@ -173,6 +173,8 @@ export default {
   data() {
     return {
       vehicles: [],
+      fleets: [],
+      drivers: [],
       searchQuery: '',
       showFilters: false,
       filters: {
@@ -238,8 +240,16 @@ export default {
         const params = {}
         if (this.filters.status) params.status = this.filters.status
         
-        const response = await vehicleService.getAll(params)
-        this.vehicles = response.data
+        const [vehiclesRes, fleetsRes, driversRes] = await Promise.all([
+          vehicleService.getAll(params),
+          fleetService.getAll(),
+          driverService.getAll()
+        ])
+        
+        this.vehicles = vehiclesRes.data
+        this.fleets = fleetsRes.data || []
+        this.drivers = driversRes.data || []
+
       } catch (err) {
         console.error('Error loading vehicles:', err)
         this.error = 'Error al cargar los vehículos.'
@@ -284,7 +294,16 @@ export default {
           }
         } else {
           // Create
-          const response = await vehicleService.create(vehicleData)
+          const payload = {
+            licensePlate: vehicleData.licensePlate,
+            brand: vehicleData.brand,
+            model: vehicleData.model,
+            year: Number(vehicleData.year),
+            mileage: Number(vehicleData.mileage),
+            fleetId: Number(vehicleData.fleetId),
+            driverId: Number(vehicleData.driverId)
+          }
+          const response = await vehicleService.create(payload)
           this.vehicles.push(response.data)
         }
         

@@ -37,12 +37,22 @@
       
       <div class="form-group">
         <label for="fleetId" class="form-label">ID Flota</label>
-        <input type="number" id="fleetId" class="form-control" v-model.number="vehicle.fleetId">
+        <select id="fleetId" class="form-control" v-model.number="vehicle.fleetId">
+          <option :value="0">Sin asignar</option>
+          <option v-for="fleet in fleets" :key="fleet.id" :value="fleet.id">
+            {{ fleet.name }}
+          </option>
+        </select>
       </div>
 
       <div class="form-group">
         <label for="driverId" class="form-label">ID Conductor</label>
-        <input type="number" id="driverId" class="form-control" v-model.number="vehicle.driverId">
+        <select id="driverId" class="form-control" v-model.number="vehicle.driverId">
+          <option :value="0">Sin asignar</option>
+          <option v-for="driver in drivers" :key="driver.id" :value="driver.id">
+            {{ driver.name }}
+          </option>
+        </select>
       </div>
     </div>
     
@@ -62,6 +72,14 @@
 export default {
   name: 'VehicleForm',
   props: {
+    fleets: {
+      type: Array,
+      default: () => []
+    },
+    drivers: {
+      type: Array,
+      default: () => []
+    },
     vehicleData: {
       type: Object,
       default: () => ({
