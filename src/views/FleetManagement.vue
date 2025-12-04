@@ -526,24 +526,73 @@ if (!this.vehicles || !Array.isArray(this.vehicles)) return [];
       this.showNewFleetModal = true
     },
     async deleteFleet(fleet) {
-      if (!confirm(`¿Estás seguro de eliminar la flota ${fleet.name}?`)) return
+// 1. Confirmación inicial
+  if (!confirm(`¿Estás seguro de eliminar la flota ${fleet.name}?`)) return;
 
-      try {
-        await fleetService.delete(fleet.id)
-        this.fleets = this.fleets.filter(f => f.id !== fleet.id)
-        if (this.selectedFleet && this.selectedFleet.id === fleet.id) {
-          this.selectedFleet = this.fleets.length > 0 ? this.fleets[0] : null
-          if (this.selectedFleet) {
-            this.viewFleet(this.selectedFleet)
-          } else {
-            this.currentFleetVehicles = []
-          }
-        }
-        alert('Flota eliminada correctamente')
-      } catch (err) {
-        console.error('Error deleting fleet:', err)
-        alert('Error al eliminar la flota')
+  this.loading = true;
+
+  try {
+    // 2. Verificar si tiene vehículos asignados
+    // (Usamos vehicleCount si es confiable, o hacemos la petición para estar seguros)
+    const vehiclesResponse = await fleetService.getVehicles(fleet.id);
+    const vehicles = vehiclesResponse.data;
+
+    if (vehicles.length > 0) {
+      // Preguntar al usuario si quiere desvincularlos automáticamente
+      const confirmUnassign = confirm(
+        `Esta flota tiene ${vehicles.length} vehículos asignados.\n\n` +
+        `Para eliminarla, primero debemos desvincular estos vehículos (quedarán sin flota).\n` +
+        `¿Deseas proceder?`
+      );
+
+      if (!confirmUnassign) {
+        this.loading = false;
+        return;
       }
+
+      // 3. Desvincular vehículos (Poner fleetId en null)
+      // Iteramos sobre los vehículos y actualizamos su fleetId
+      const unassignPromises = vehicles.map(vehicle => {
+        // Clonamos el vehículo y cambiamos solo el fleetId
+        const updatedVehicle = { 
+            ...vehicle, 
+            fleetId: null // O usa 0 si tu backend no permite nulls
+        };
+        
+        // Usamos el servicio de vehículos para actualizar
+        return vehicleService.update(vehicle.id, updatedVehicle);
+      });
+
+      // Esperamos a que todos se actualicen
+      await Promise.all(unassignPromises);
+    }
+
+    // 4. Ahora que está vacía, eliminamos la flota
+    await fleetService.delete(fleet.id);
+
+    // 5. Actualizar la interfaz (UI)
+    this.fleets = this.fleets.filter(f => f.id !== fleet.id);
+    
+    // Si la flota borrada era la seleccionada, limpiar la selección
+    if (this.selectedFleet && this.selectedFleet.id === fleet.id) {
+      this.selectedFleet = this.fleets.length > 0 ? this.fleets[0] : null;
+      if (this.selectedFleet) {
+        this.viewFleet(this.selectedFleet);
+      } else {
+        this.currentFleetVehicles = [];
+      }
+    }
+
+    alert('Flota eliminada y vehículos liberados correctamente.');
+
+  } catch (err) {
+    console.error('Error deleting fleet:', err);
+    // Mostrar mensaje detallado del backend si existe
+    const msg = err.response?.data?.message || err.message || 'Error desconocido';
+    alert(`Error al eliminar la flota: ${msg}`);
+  } finally {
+    this.loading = false;
+  }
     },
     showFleetStats(fleet) {
       this.selectedFleet = fleet
