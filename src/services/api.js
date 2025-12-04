@@ -118,7 +118,7 @@ const driverService = {
 
 const fleetService = {
   getAll: async () => {
-    const url = '/fleetmanagement/api/fleets/';
+    const url = '/fleetmanagement/api/fleets';
     console.log(`[FleetService] GET Request: ${url}`);
     if (useMock) return fleetAdapter.getAll();
     try {
@@ -157,7 +157,7 @@ const fleetService = {
     }
   },
   create: async (data) => {
-    const url = '/fleetmanagement/api/fleets/';
+    const url = '/fleetmanagement/api/fleets';
     console.log(`[FleetService] POST Request: ${url}`, data);
     if (useMock) return fleetAdapter.create(data);
     try {
