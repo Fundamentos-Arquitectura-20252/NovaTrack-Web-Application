@@ -280,7 +280,7 @@
               <td style="padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee;">
                 <StatusBadge :status="vehicle.status" :text="getStatusText(vehicle.status)" />
               </td>
-              <td style="padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee;">{{ vehicle.fleet || 'No asignado' }}</td>
+              <td style="padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee;">{{ vehicle.fleetId || 'No asignado' }}</td>
             </tr>
             </tbody>
           </table>
@@ -557,45 +557,60 @@ if (!this.vehicles || !Array.isArray(this.vehicles)) return [];
         this.selectedVehiclesToAssign = []
       }
     },
-    async assignVehicles() {
-      if (this.selectedVehiclesToAssign.length === 0) return
+async assignVehicles() {
+  // 1. Validación básica
+  if (this.selectedVehiclesToAssign.length === 0) return;
 
-try {
-    // 1. Llamada al servicio
-    await fleetService.assignVehicles(this.selectedFleet.id, this.selectedVehiclesToAssign);
+  this.loading = true;
 
-    // 2. Mensaje de éxito
-    alert(`Se han asignado ${this.selectedVehiclesToAssign.length} vehículos correctamente.`);
+  try {
+    // 2. PROTECCIÓN CRÍTICA: Asegurar que this.vehicles existe
+    if (!this.vehicles || !Array.isArray(this.vehicles) || this.vehicles.length === 0) {
+        console.warn("La lista maestra de vehículos estaba vacía. Recargando...");
+        await this.loadAllVehicles();
+    }
 
-    // 3. Recargar los datos de la flota actual para ver los nuevos vehículos en la tabla
+    // 3. Crear el payload (Array de OBJETOS, no IDs)
+    const fullVehiclesPayload = this.vehicles.filter(v => 
+      this.selectedVehiclesToAssign.includes(v.id)
+    );
+    
+    // Debug: Verifica en la consola qué estás enviando exactamente
+    console.log("Enviando a API:", fullVehiclesPayload);
+
+    // Validación extra antes de llamar a la API
+    if (fullVehiclesPayload.length === 0) {
+       throw new Error("No se encontraron los datos de los vehículos seleccionados.");
+    }
+
+    // 4. Llamada al servicio
+    await fleetService.assignVehicles(this.selectedFleet.id, fullVehiclesPayload);
+
+    // 5. Éxito
+    alert(`Se han asignado ${fullVehiclesPayload.length} vehículos correctamente.`);
+    
+    // Recargar datos
     await this.loadFleetVehicles(this.selectedFleet.id);
-
-    // 4. Actualizar el contador de vehículos en la tarjeta de la flota (Visual)
-    // Buscamos la flota en el array principal y actualizamos su contador
+    
+    // Actualizar UI
     const fleetIndex = this.fleets.findIndex(f => f.id === this.selectedFleet.id);
     if (fleetIndex !== -1) {
-      // Opción A: Si el backend devuelve la flota actualizada, úsala.
-      // Opción B (Manual): Sumar la cantidad localmente
-      this.fleets[fleetIndex].vehicleCount = (this.fleets[fleetIndex].vehicleCount || 0) + this.selectedVehiclesToAssign.length;
-      
-      // Actualizar también el objeto seleccionado para reflejar cambios en el header del card
+      this.fleets[fleetIndex].vehicleCount = (this.fleets[fleetIndex].vehicleCount || 0) + fullVehiclesPayload.length;
       this.selectedFleet = { ...this.fleets[fleetIndex] }; 
     }
 
-    // 5. Cerrar y limpiar
+    // Limpiar modal
     this.showAssignVehiclesModal = false;
     this.selectedVehiclesToAssign = [];
     this.selectAllVehicles = false;
 
   } catch (err) {
     console.error('Error assigning vehicles:', err);
-    // Mostrar error más detallado si viene del backend
-    const msg = err.response?.data?.message || 'Error al asignar vehículos. Verifique que no estén asignados a otra flota.';
-    alert(msg);
+    alert(err.message || 'Ocurrió un error al asignar los vehículos.');
   } finally {
     this.loading = false;
   }
-    },
+},
     async saveFleet() {
       try {
         if (this.editingFleet.id) {

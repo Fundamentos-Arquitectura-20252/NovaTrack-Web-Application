@@ -1,6 +1,5 @@
 import axios from 'axios'
 import {
-  vehicleAdapter,
   driverAdapter,
   fleetAdapter,
   reportAdapter,
@@ -47,30 +46,65 @@ api.interceptors.response.use(
 
 // Definir servicios para cada entidad, usando adaptadores mock si está en modo desarrollo
 const vehicleService = {
-  getAll: (params) => {
+  getAll: async (params) => {
     const url = '/fleetmanagement/api/vehicles';
     console.log(`[VehicleService] GET Request: ${url}`, params);
-    return useMock ? vehicleAdapter.getAll() : api.get(url, { params });
+    try {
+      const response = await api.get(url, { params });
+      console.log(`[VehicleService] GET Response: ${url}`, response.data);
+      return response;
+    } catch (error) {
+      console.error(`[VehicleService] GET Error: ${url}`, error);
+      throw error;
+    }
   },
-  getById: id => {
+  getById: async id => {
     const url = `/fleetmanagement/api/vehicles/${id}`;
     console.log(`[VehicleService] GET Request: ${url}`);
-    return useMock ? vehicleAdapter.getById(id) : api.get(url);
+    try {
+      const response = await api.get(url);
+      console.log(`[VehicleService] GET Response: ${url}`, response.data);
+      return response;
+    } catch (error) {
+      console.error(`[VehicleService] GET Error: ${url}`, error);
+      throw error;
+    }
   },
-  create: data => {
+  create: async (data) => {
     const url = '/fleetmanagement/api/vehicles';
     console.log(`[VehicleService] POST Request: ${url}`, data);
-    return useMock ? vehicleAdapter.create(data) : api.post(url, data);
+    try {
+      const response = await api.post(url, data);
+      console.log(`[VehicleService] POST Response: ${url}`, response.data);
+      return response;
+    } catch (error) {
+      console.error(`[VehicleService] POST Error: ${url}`, error);
+      throw error;
+    }
   },
-  update: (id, data) => {
+  update: async (id, data) => {
     const url = `/fleetmanagement/api/vehicles/${id}`;
     console.log(`[VehicleService] PUT Request: ${url}`, data);
-    return useMock ? vehicleAdapter.update(id, data) : api.put(url, data);
+    try {
+      const response = await api.put(url, data);
+      console.log(`[VehicleService] PUT Response: ${url}`, response.data);
+      return response;
+    } catch (error) {
+      console.error(`[VehicleService] PUT Error: ${url}`, error);
+      throw error;
+    }
   },
-  delete: id => {
+  delete: async id => {
     const url = `/fleetmanagement/api/vehicles/${id}`;
     console.log(`[VehicleService] DELETE Request: ${url}`);
-    return useMock ? vehicleAdapter.delete(id) : api.delete(url);
+    try {
+      const response = await api.delete(url);
+      console.log(`[VehicleService] DELETE Response: ${url}`, response.data);
+      return response;
+    } catch (error) {
+      console.error(`[VehicleService] DELETE Error: ${url}`, error);
+      throw error;
+    }
   }
 }
 
@@ -161,17 +195,48 @@ const fleetService = {
       throw error;
     }
   },
-  assignVehicles: async (id, vehicleIds) => {
-    const url = `/fleetmanagement/api/fleets/${id}/vehicles`;
-    const payload = { vehicleIds };
-    console.log(`[FleetService] POST Request: ${url}`, payload);
-    if (useMock) return fleetAdapter.assignVehicles(id, payload);
+  assignVehicles: async (fleetId, vehicles) => {
+    // Validación de seguridad
+    if (!vehicles || !Array.isArray(vehicles)) {
+      console.error("[FleetService] Error: 'vehicles' debe ser un array válido", vehicles);
+      throw new Error("Datos de vehículos inválidos");
+    }
+
+    if (useMock) return fleetAdapter.assignVehicles(fleetId, { vehicleIds: vehicles.map(v => v.id) });
+
     try {
-      const response = await api.post(url, payload);
-      console.log(`[FleetService] POST Response: ${url}`, response.data);
-      return response;
+      const promises = vehicles.map(vehicle => {
+        // Asegurarse de que vehicle no es undefined antes de acceder a sus propiedades
+        if (!vehicle) return Promise.resolve();
+
+        const url = `/fleetmanagement/api/vehicles/${vehicle.id}`;
+
+        // Construir payload
+        const payload = {
+          licensePlate: vehicle.licensePlate || vehicle.plate,
+          brand: vehicle.brand,
+          model: vehicle.model,
+          year: Number(vehicle.year),
+          mileage: Number(vehicle.mileage),
+          status: vehicle.status,
+          fleetId: Number(fleetId), // ID de la nueva flota
+          driverId: Number(vehicle.driverId || 0),
+          lastServiceDate: vehicle.lastServiceDate || new Date().toISOString(),
+          nextServiceDate: vehicle.nextServiceDate || new Date().toISOString()
+        };
+
+        console.log(`[FleetService] PUT Request: ${url}`, payload);
+        return api.put(url, payload);
+      });
+
+      const responses = await Promise.all(promises);
+      // Validar que responses existe antes de leer length
+      if (responses) {
+        console.log(`[FleetService] Assigned ${responses.length} vehicles`);
+      }
+      return responses;
     } catch (error) {
-      console.error(`[FleetService] POST Error: ${url}`, error);
+      console.error(`[FleetService] Assign Error`, error);
       throw error;
     }
   }

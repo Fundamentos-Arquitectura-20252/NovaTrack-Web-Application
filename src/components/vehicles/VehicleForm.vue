@@ -20,19 +20,9 @@
         <label for="year" class="form-label">Año *</label>
         <input type="number" id="year" class="form-control" v-model.number="vehicle.year" required>
       </div>
-      
       <div class="form-group">
         <label for="mileage" class="form-label">Kilometraje inicial *</label>
         <input type="number" id="mileage" class="form-control" v-model.number="vehicle.mileage" required>
-      </div>
-      
-      <div class="form-group">
-        <label for="status" class="form-label">Estado</label>
-        <select id="status" class="form-control" v-model="vehicle.status">
-          <option value="active">Activo</option>
-          <option value="inactive">Mantenimiento</option>
-          <option value="warning">En ruta</option>
-        </select>
       </div>
       
       <div class="form-group">
@@ -44,21 +34,6 @@
           </option>
         </select>
       </div>
-
-      <div class="form-group">
-        <label for="driverId" class="form-label">ID Conductor</label>
-        <select id="driverId" class="form-control" v-model.number="vehicle.driverId">
-          <option :value="0">Sin asignar</option>
-          <option v-for="driver in drivers" :key="driver.id" :value="driver.id">
-            {{ driver.name }}
-          </option>
-        </select>
-      </div>
-    </div>
-    
-    <div class="form-group">
-      <label for="notes" class="form-label">Notas adicionales</label>
-      <textarea id="notes" class="form-control" rows="3" v-model="vehicle.notes"></textarea>
     </div>
     
     <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem;">
@@ -88,10 +63,8 @@ export default {
         model: '',
         year: new Date().getFullYear(),
         mileage: 0,
-        status: 'active',
         fleetId: 0,
-        driverId: 0,
-        notes: ''
+        driverId: 0
       })
     }
   },

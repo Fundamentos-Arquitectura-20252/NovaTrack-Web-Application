@@ -129,6 +129,8 @@
     >
       <VehicleForm 
         :vehicle-data="editingVehicle"
+        :fleets="fleets"
+        :drivers="drivers"
         @submit="saveVehicle"
         @cancel="showVehicleModal = false"
       />
@@ -159,7 +161,7 @@
 <script>
 import { Header, StatusBadge, Modal, Pagination } from '@/components/common'
 import VehicleForm from '@/components/vehicles/VehicleForm.vue'
-import { vehicleService, fleetService, driverService } from '@/services/api'
+import { vehicleService, fleetService } from '@/services/api'
 
 export default {
   name: 'VehicleManagement',
@@ -239,16 +241,14 @@ export default {
       try {
         const params = {}
         if (this.filters.status) params.status = this.filters.status
-        
-        const [vehiclesRes, fleetsRes, driversRes] = await Promise.all([
-          vehicleService.getAll(params),
-          fleetService.getAll(),
-          driverService.getAll()
-        ])
-        
+        console.log("params", params)
+        const vehiclesRes = await vehicleService.getAll(params)
+        const fleetsRes = await fleetService.getAll()
+        const driversRes = 1
         this.vehicles = vehiclesRes.data
         this.fleets = fleetsRes.data || []
-        this.drivers = driversRes.data || []
+        this.drivers = driversRes || []
+        console.log( "vehiclesRes", vehiclesRes)
 
       } catch (err) {
         console.error('Error loading vehicles:', err)
