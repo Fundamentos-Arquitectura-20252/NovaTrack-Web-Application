@@ -28,7 +28,7 @@
       <div class="form-group">
         <label for="fleetId" class="form-label">ID Flota</label>
         <select id="fleetId" class="form-control" v-model.number="vehicle.fleetId">
-          <option :value="0">Sin asignar</option>
+          <option :value=null>Sin asignar</option>
           <option v-for="fleet in fleets" :key="fleet.id" :value="fleet.id">
             {{ fleet.name }}
           </option>
