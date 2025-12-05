@@ -1,8 +1,7 @@
 <template>
   <nav class="sidebar">
     <div class="logo-container">
-<!--       <img src="@/assets/img/logo.png" alt="NovaTrack Logo" class="logo-image"> -->
-       <p class="logo-text text-center">NovaTrack</p>
+      <img src="@/assets/img/logo.png" alt="NovaTrack Logo" class="logo-image">
     </div>
     
     <ul class="menu">

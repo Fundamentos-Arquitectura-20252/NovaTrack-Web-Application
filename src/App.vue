@@ -18,8 +18,18 @@ export default {
     Notification
   },
   computed: {
+    // Ocultar la barra lateral en las páginas de autenticación (Login y Register)
     isLoginPage() {
-      return this.$route.path === '/login'
+      // Preferir meta.layout cuando esté definido en la ruta
+      if (this.$route && this.$route.meta && this.$route.meta.layout === 'auth') {
+        return true
+      }
+      const authPages = ['Login', 'Register']
+      const pathAuth = ['/login', '/register']
+      const currentPath = (this.$route && this.$route.path) ? this.$route.path.toLowerCase() : ''
+      const isByName = this.$route && authPages.includes(this.$route.name)
+      const isByPath = pathAuth.some(p => currentPath.startsWith(p))
+      return isByName || isByPath
     }
   },
   methods: {

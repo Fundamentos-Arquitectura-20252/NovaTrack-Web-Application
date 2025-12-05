@@ -1,6 +1,6 @@
-# Flota365 - Sistema de Gestión de Flotas
+# NovaTrack - Sistema de Gestión de Flotas
 
-**Flota365** es una plataforma web integral para la gestión y monitoreo de flotas de vehículos, desarrollada con **Vue.js**. Permite administrar vehículos, conductores y flotas; generar reportes, realizar monitoreo en tiempo real y aplicar análisis predictivo con IA.
+**NovaTrack** es una plataforma web integral para la gestión y monitoreo de flotas de vehículos, desarrollada con **Vue.js**. Permite administrar vehículos, conductores y flotas; generar reportes, realizar monitoreo en tiempo real y aplicar análisis predictivo con IA.
 
 ---
 
@@ -165,4 +165,4 @@ Este proyecto está bajo la [Licencia MIT](LICENSE).
 
 ---
 
-© 2025 **Flota365** – VSC-Visionaries
+© 2025 **NovaTrack** – AutoLogix

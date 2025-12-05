@@ -3,7 +3,7 @@
     <div class="login-container">
       <div class="login-logo">
         <div style="display: flex; justify-content: center; align-items: center;">
-          <img src="@/assets/img/logo.png" alt="Flota365 Logo" class="logo-image">
+          <img src="@/assets/img/logo.png" alt="NovaTrack Logo" class="logo-image">
         </div>
       </div>
       
@@ -51,10 +51,15 @@
         <div class="form-group">
           <button type="submit" class="btn btn-primary" style="width: 100%;">Iniciar Sesión</button>
         </div>
+
+        <!-- Enlace a crear cuenta mantenido en el mismo estilo -->
+        <div class="form-group" style="text-align: center; margin-top: 0.5rem;">
+          <router-link to="/register" style="color: var(--color-turquoise); text-decoration: none;">¿No tienes cuenta? Crear cuenta</router-link>
+        </div>
       </form>
       
       <div style="text-align: center; margin-top: 1.5rem; color: #666;">
-        <p>© 2025 Flota365 - VSC-Visionaries</p>
+        <p>© 2025 NovaTrack - AutoLogix</p>
       </div>
     </div>
   </div>

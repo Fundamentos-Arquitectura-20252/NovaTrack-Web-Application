@@ -1,4 +1,4 @@
-/* styles.css - Estilos compartidos para Flota365 */
+/* styles.css - Estilos compartidos para NovaTrack */
 
 /* Reset y estilos generales */
 * {
@@ -72,9 +72,17 @@ p {
     overflow-y: auto;
 }
 
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
 .logo-image {
-  height: 80px; /* Ajusta este valor según el tamaño que necesites */
+  height: 56px; /* tamaño más compacto para el sidebar */
   width: auto;
+  margin-bottom: 0.5rem;
 }
 
 .logo-icon {

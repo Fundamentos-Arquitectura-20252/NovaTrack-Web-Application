@@ -8,6 +8,7 @@ import DriverManagement from '../views/DriverManagement.vue'
 import Reporting from '../views/Reporting.vue'
 import Monitoring from '../views/Monitoring.vue'
 import Analytics from '../views/Analytics.vue'
+import Register from '../views/Register.vue'
 
 Vue.use(VueRouter)
 
@@ -20,7 +21,14 @@ const routes = [
   {
     path: '/login',
     name: 'Login',
-    component: Login
+    component: Login,
+    meta: { layout: 'auth' }
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register,
+    meta: { layout: 'auth' }
   },
   {
     path: '/fleet-management',
