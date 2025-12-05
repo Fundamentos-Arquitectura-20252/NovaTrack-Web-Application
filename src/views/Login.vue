@@ -13,7 +13,7 @@
           <div style="position: relative;">
             <i class="fas fa-envelope" style="position: absolute; left: 10px; top: 12px; color: #666"></i>
             <input
-              type="email" 
+              type="email"
               id="email" 
               class="form-control" 
               placeholder="correo@empresa.com" 
@@ -29,7 +29,7 @@
           <div style="position: relative;">
             <i class="fas fa-lock" style="position: absolute; left: 10px; top: 12px; color: #666"></i>
             <input
-              type="password" 
+              type="password"
               id="password" 
               class="form-control" 
               placeholder="Ingrese su contraseña" 
@@ -45,7 +45,7 @@
             <input type="checkbox" id="remember" v-model="credentials.remember" class="custom-checkbox-input">
             <label for="remember" class="custom-checkbox-label">Recordarme</label>
           </div>
-           <a href="#" style="color: var(--color-turquoise); text-decoration: none;">¿Olvidó su contraseña?</a>
+           <a href="#" class="auth-link">¿Olvidó su contraseña?</a>
          </div>
 
          <div class="form-group">
@@ -54,7 +54,7 @@
 
          <!-- Enlace a crear cuenta mantenido en el mismo estilo -->
          <div class="form-group" style="text-align: center; margin-top: 0.5rem;">
-           <router-link to="/register" style="color: var(--color-turquoise); text-decoration: none;">¿No tienes cuenta? Crear cuenta</router-link>
+           <router-link to="/register" class="auth-link">¿No tienes cuenta? Crear cuenta</router-link>
          </div>
        </form>
 
