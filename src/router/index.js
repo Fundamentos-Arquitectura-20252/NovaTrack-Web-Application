@@ -9,6 +9,7 @@ import Reporting from '../views/Reporting.vue'
 import Monitoring from '../views/Monitoring.vue'
 import Analytics from '../views/Analytics.vue'
 import Register from '../views/Register.vue'
+import ForgotPassword from '../views/ForgotPassword.vue'
 
 Vue.use(VueRouter)
 
@@ -22,6 +23,12 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login,
+    meta: { layout: 'auth' }
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPassword,
     meta: { layout: 'auth' }
   },
   {

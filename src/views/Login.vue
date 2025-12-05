@@ -45,7 +45,7 @@
             <input type="checkbox" id="remember" v-model="credentials.remember" class="custom-checkbox-input">
             <label for="remember" class="custom-checkbox-label">Recordarme</label>
           </div>
-           <a href="#" class="auth-link">¿Olvidó su contraseña?</a>
+           <router-link to="/forgot-password" class="auth-link">¿Olvidó su contraseña?</router-link>
          </div>
 
          <div class="form-group">
