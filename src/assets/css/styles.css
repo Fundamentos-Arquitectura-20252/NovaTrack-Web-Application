@@ -79,10 +79,17 @@ p {
   margin-bottom: 1.25rem;
 }
 
-.logo-image {
+.logo-container .logo-image {
   height: 56px; /* tamaño más compacto para el sidebar */
   width: auto;
   margin-bottom: 0.5rem;
+}
+
+/* Logo específico para pantallas de auth/login: más grande */
+.login-logo .logo-image {
+  height: 120px; /* tamaño mayor para el formulario de login */
+  width: auto;
+  margin-bottom: 1rem;
 }
 
 .logo-icon {
