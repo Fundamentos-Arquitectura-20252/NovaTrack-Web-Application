@@ -331,6 +331,78 @@ button[disabled]{
   text-decoration: none;
 }
 
+/* Custom checkbox styles for remember-me */
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Hide the native checkbox but keep it accessible */
+.custom-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+}
+
+.custom-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  color: #333;
+  font-weight: 500;
+}
+
+.custom-checkbox-label::before {
+  content: '';
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(85,219,224,0.15) 0%, rgba(59,177,196,0.08) 100%);
+  border: 2px solid rgba(59,177,196,0.22);
+  box-shadow: 0 4px 10px rgba(11,59,64,0.04);
+  transition: background .12s ease, transform .12s ease, border-color .12s ease;
+}
+
+/* Checkmark */
+.custom-checkbox-label::after {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 8px;
+  margin-left: -10px;
+  transform: scale(0);
+  opacity: 0;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 10"><polyline points="1 5.5 4.5 9 11 1" fill="none" stroke="rgba(11,59,64,1)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: transform .12s ease, opacity .12s ease;
+}
+
+.custom-checkbox-input:focus + .custom-checkbox-label::before {
+  box-shadow: 0 0 0 4px rgba(59,177,196,0.12);
+}
+
+.custom-checkbox-input:checked + .custom-checkbox-label::before {
+  background: linear-gradient(90deg, var(--brand-1) 0%, var(--brand-2) 100%);
+  border-color: rgba(59,177,196,0.9);
+  transform: translateY(-1px);
+}
+
+.custom-checkbox-input:checked + .custom-checkbox-label::after {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Ensure spacing looks good in the auth form */
+.remember { margin-right: auto; }
+
 @media (max-width: 768px) {
     .sidebar {
         width: 70px;

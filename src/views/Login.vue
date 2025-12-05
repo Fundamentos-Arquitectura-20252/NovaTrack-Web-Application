@@ -11,8 +11,8 @@
         <div class="form-group">
           <label for="email" class="form-label">Correo electrónico</label>
           <div style="position: relative;">
-            <i class="fas fa-envelope" style="position: absolute; left: 10px; top: 12px; color: #666;"></i>
-            <input 
+            <i class="fas fa-envelope" style="position: absolute; left: 10px; top: 12px; color: #666"></i>
+            <input
               type="email" 
               id="email" 
               class="form-control" 
@@ -27,8 +27,8 @@
         <div class="form-group">
           <label for="password" class="form-label">Contraseña</label>
           <div style="position: relative;">
-            <i class="fas fa-lock" style="position: absolute; left: 10px; top: 12px; color: #666;"></i>
-            <input 
+            <i class="fas fa-lock" style="position: absolute; left: 10px; top: 12px; color: #666"></i>
+            <input
               type="password" 
               id="password" 
               class="form-control" 
@@ -41,50 +41,50 @@
         </div>
         
         <div class="form-group" style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <input type="checkbox" id="remember" v-model="credentials.remember">
-            <label for="remember">Recordarme</label>
+          <div class="remember">
+            <input type="checkbox" id="remember" v-model="credentials.remember" class="custom-checkbox-input">
+            <label for="remember" class="custom-checkbox-label">Recordarme</label>
           </div>
-          <a href="#" style="color: var(--color-turquoise); text-decoration: none;">¿Olvidó su contraseña?</a>
-        </div>
-        
-        <div class="form-group">
-          <button type="submit" class="btn btn-primary" style="width: 100%;">Iniciar Sesión</button>
-        </div>
+           <a href="#" style="color: var(--color-turquoise); text-decoration: none;">¿Olvidó su contraseña?</a>
+         </div>
 
-        <!-- Enlace a crear cuenta mantenido en el mismo estilo -->
-        <div class="form-group" style="text-align: center; margin-top: 0.5rem;">
-          <router-link to="/register" style="color: var(--color-turquoise); text-decoration: none;">¿No tienes cuenta? Crear cuenta</router-link>
-        </div>
-      </form>
-      
-      <div style="text-align: center; margin-top: 1.5rem; color: #666;">
-        <p>© 2025 NovaTrack - AutoLogix</p>
-      </div>
-    </div>
-  </div>
-</template>
+         <div class="form-group">
+           <button type="submit" class="btn btn-primary" style="width: 100%;">Iniciar Sesión</button>
+         </div>
 
-<script>
-export default {
-  name: 'Login',
-  data() {
-    return {
-      credentials: {
-        email: '',
-        password: '',
-        remember: false
-      }
-    }
-  },
-  methods: {
-    login() {
-      // Simular autenticación
-      if (this.credentials.email && this.credentials.password) {
-        // Normalmente aquí iría una llamada a la API
-        this.$router.push('/')
-      }
-    }
-  }
-}
-</script>
+         <!-- Enlace a crear cuenta mantenido en el mismo estilo -->
+         <div class="form-group" style="text-align: center; margin-top: 0.5rem;">
+           <router-link to="/register" style="color: var(--color-turquoise); text-decoration: none;">¿No tienes cuenta? Crear cuenta</router-link>
+         </div>
+       </form>
+
+       <div style="text-align: center; margin-top: 1.5rem; color: #666;">
+         <p>© 2025 NovaTrack - AutoLogix</p>
+       </div>
+     </div>
+   </div>
+ </template>
+
+ <script>
+ export default {
+   name: 'Login',
+   data() {
+     return {
+       credentials: {
+         email: '',
+         password: '',
+         remember: false
+       }
+     }
+   },
+   methods: {
+     login() {
+       // Simular autenticación
+       if (this.credentials.email && this.credentials.password) {
+         // Normalmente aquí iría una llamada a la API
+         this.$router.push('/')
+       }
+     }
+   }
+ }
+ </script>
